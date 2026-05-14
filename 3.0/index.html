@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今日の夜ご飯 投票アプリ</title>
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --bg-color: #f7f9fc;
+            --card-bg: #ffffff;
+            --text-color: #2d3436;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .option-card {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .option-card input {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .card-content {
+            border: 2px solid #eee;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            font-size: 2.5rem;
+        }
+
+        .label {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .option-card input:checked + .card-content {
+            border-color: var(--primary-color);
+            background-color: #fff5f5;
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.2);
+        }
+
+        button#submit-vote {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button#submit-vote:hover {
+            background-color: #fa5252;
+        }
+
+        button#submit-vote:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        #results-section {
+            margin-top: 2.5rem;
+            padding-top: 2rem;
+            border-top: 1px solid #eee;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            background-color: #eee;
+            border-radius: 10px;
+            height: 12px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--secondary-color);
+            width: 0%;
+            transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<main class="container">
+    <header>
+        <h1>🍲 今日の夜ご飯は？</h1>
+        <p>みんなで投票して決めよう！</p>
+    </header>
+
+    <section id="vote-form-section">
+        <form id="vote-form">
+            <div class="options-container">
+                <label class="option-card">
+                    <input type="radio" name="dinner" value="nabe" required>
+                    <div class="card-content">
+                        <span class="icon">🍲</span>
+                        <span class="label">鍋</span>
+                    </div>
+                </label>
+                
+                <label class="option-card">
+                    <input type="radio" name="dinner" value="curry">
+                    <div class="card-content">
+                        <span class="icon">🍛</span>
+                        <span class="label">カレー</span>
+                    </div>
+                </label>
+
+                <label class="option-card">
+                    <input type="radio" name="dinner" value="oyako">
+                    <div class="card-content">
+                        <span class="icon">🐣</span>
+                        <span class="label">親子丼</span>
+                    </div>
+                </label>
+
+                <label class="option-card">
+                    <input type="radio" name="dinner" value="malatang">
+                    <div class="card-content">
+                        <span class="icon">🌶️</span>
+                        <span class="label">マーラータン</span>
+                    </div>
+                </label>
+            </div>
+            <button type="submit" id="submit-vote">投票する！</button>
+        </form>
+    </section>
+
+    <section id="results-section">
+        <h2>📊 現在のランキング</h2>
+        <div id="results-list">
+            <!-- JSで動的に生成 -->
+        </div>
+    </section>
+</main>
+
+<script>
+    const STORAGE_KEY = 'dinner_votes_3.0';
+    const options = [
+        { id: 'nabe', label: '鍋', icon: '🍲' },
+        { id: 'curry', label: 'カレー', icon: '🍛' },
+        { id: 'oyako', label: '親子丼', icon: '🐣' },
+        { id: 'malatang', label: 'マーラータン', icon: '🌶️' }
+    ];
+
+    // 初期データの読み込み
+    let votes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+        nabe: 0,
+        curry: 0,
+        oyako: 0,
+        malatang: 0
+    };
+
+    const voteForm = document.getElementById('vote-form');
+    const resultsList = document.getElementById('results-list');
+
+    function updateResults() {
+        const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
+        resultsList.innerHTML = '';
+
+        options.forEach(opt => {
+            const count = votes[opt.id];
+            const percentage = totalVotes === 0 ? 0 : Math.round((count / totalVotes) * 100);
+            
+            const resultItem = document.createElement('div');
+            resultItem.className = 'result-item fade-in';
+            resultItem.innerHTML = `
+                <div class="result-header">
+                    <span>${opt.icon} ${opt.label}</span>
+                    <span>${count} 票 (${percentage}%)</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${percentage}%"></div>
+                </div>
+            `;
+            resultsList.appendChild(resultItem);
+        });
+    }
+
+    voteForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const selected = voteForm.dinner.value;
+        if (selected) {
+            votes[selected]++;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(votes));
+            updateResults();
+            
+            // 投票後のフィードバック
+            const btn = document.getElementById('submit-vote');
+            btn.textContent = '投票完了！';
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.textContent = '投票する！';
+                btn.disabled = false;
+                voteForm.reset();
+            }, 2000);
+        }
+    });
+
+    // 初回表示
+    updateResults();
+</script>
+
+</body>
+</html>
